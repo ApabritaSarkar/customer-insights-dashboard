@@ -1,65 +1,57 @@
-import Image from "next/image";
+import StatCard from "@/components/StatCard";
+import SentimentChart from "@/components/SentimentChart";
+import { customers, sentimentTrend } from "@/lib/mockData";
 
-export default function Home() {
+// This page is Server-Side Rendered (SSR) — data fetched fresh on every request
+export const dynamic = "force-dynamic";
+
+async function getDashboardStats() {
+  const total = customers.length;
+  const positive = customers.filter((c) => c.sentiment === "positive").length;
+  const negative = customers.filter((c) => c.sentiment === "negative").length;
+  const openTickets = customers.reduce((sum, c) => sum + c.ticketsOpen, 0);
+  const avgScore = Math.round(
+    customers.reduce((sum, c) => sum + c.score, 0) / total
+  );
+  return { total, positive, negative, openTickets, avgScore };
+}
+
+export default async function DashboardPage() {
+  const stats = await getDashboardStats();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div>
+      {/* Page header */}
+      <div className="mb-8">
+        <p className="text-xs font-semibold text-blue-400 uppercase tracking-widest mb-1">
+          Overview
+        </p>
+        <h2 className="text-3xl font-bold text-white">Dashboard</h2>
+        <p className="text-slate-400 mt-1 text-sm">
+          Real-time customer health and sentiment summary
+        </p>
+      </div>
+
+      {/* Stat cards */}
+      <section
+        aria-label="Summary statistics"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10"
+      >
+        <StatCard title="Total Customers" value={stats.total} accent="blue" />
+        <StatCard title="Avg Sentiment Score" value={`${stats.avgScore}%`} accent="green" subtitle="Across all accounts" />
+        <StatCard title="Open Tickets" value={stats.openTickets} accent="yellow" subtitle="Requiring attention" />
+        <StatCard title="At-Risk Accounts" value={stats.negative} accent="red" subtitle="Negative sentiment" />
+      </section>
+
+      {/* Chart */}
+      <section aria-label="Sentiment trend chart">
+        <h3 className="text-lg font-semibold text-white mb-4">
+          Sentiment Trend — Last 6 Months
+        </h3>
+        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+          <SentimentChart data={sentimentTrend} />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </section>
     </div>
   );
 }
